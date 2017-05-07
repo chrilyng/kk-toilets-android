@@ -2,9 +2,13 @@ package dk.siit.kktoilets;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -23,6 +27,8 @@ public class MainActivity extends AppCompatActivity {
     private static final boolean DEBUG = false;
     public static final String BROADCAST_ANSWER_ACTION = "dk.siit.kktoilets.DOWNLOAD_RECEIVE";
     public static final String BROADCAST_ANSWER_EXTRA = "dk.siit.kktoilets.DOWNLOAD_EXTRA";
+    private static final int FULL_PAGE_COUNT = 10;
+    private static final int HALF_PAGE_COUNT = FULL_PAGE_COUNT/2;
 
     private DownloadReceiver mDownloadReceiver;
     private RecyclerView mRecyclerView;
@@ -33,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private int mVisibleItems = 0;
     private int mTotalItems = 0;
     private boolean mBottomHit = false;
+    private boolean mNoInternet = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,11 +60,15 @@ public class MainActivity extends AppCompatActivity {
 
                 if(DEBUG) Log.i(TAG, "Visible items: "+mVisibleItems+" total items: "+mTotalItems + " bottom hit: "+mBottomHit);
 
-                if(!mBottomHit && !mLoading && mTotalItems - mVisibleItems < firstVisible + 5 && mTotalItems <= 80) {
-                    mLoading = true;
-                    Intent serviceIntent = new Intent(MainActivity.this, DownloadService.class);
-                    serviceIntent.putExtra(DownloadService.DOWNLOAD_EXTRA_PAGE, ++mRequestPage);
-                    startService(serviceIntent);
+                if(checkConnectivity()) {
+                    if(!mBottomHit && !mLoading && mTotalItems - mVisibleItems < firstVisible + HALF_PAGE_COUNT) {
+                        mLoading = true;
+                        Intent serviceIntent = new Intent(MainActivity.this, DownloadService.class);
+                        serviceIntent.putExtra(DownloadService.DOWNLOAD_EXTRA_PAGE, ++mRequestPage);
+                        startService(serviceIntent);
+                    }
+                } else {
+                    showNoInternetDialog();
                 }
                 super.onScrolled(recyclerView, dx, dy);
             }
@@ -68,16 +79,65 @@ public class MainActivity extends AppCompatActivity {
         intentFilter.addAction(BROADCAST_ANSWER_ACTION);
         LocalBroadcastManager.getInstance(this).registerReceiver(mDownloadReceiver, intentFilter);
 
-        mLoading = true;
-        Intent serviceIntent = new Intent(this, DownloadService.class);
-        serviceIntent.putExtra(DownloadService.DOWNLOAD_EXTRA_PAGE, 0);
-        startService(serviceIntent);
+        if(checkConnectivity()) {
+            mLoading = true;
+            Intent serviceIntent = new Intent(this, DownloadService.class);
+            serviceIntent.putExtra(DownloadService.DOWNLOAD_EXTRA_PAGE, mRequestPage);
+            startService(serviceIntent);
+        } else {
+            showNoInternetDialog();
+        }
     }
 
     @Override
     protected void onDestroy() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mDownloadReceiver);
         super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if(mNoInternet) {
+            if(checkConnectivity()) {
+                mNoInternet = false;
+                mLoading = true;
+                Intent serviceIntent = new Intent(this, DownloadService.class);
+                serviceIntent.putExtra(DownloadService.DOWNLOAD_EXTRA_PAGE, mRequestPage);
+                startService(serviceIntent);
+            } else {
+                showNoInternetDialog();
+            }
+        }
+    }
+
+    private boolean checkConnectivity() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+        return isConnected;
+    }
+
+    private void showNoInternetDialog() {
+        if(!mNoInternet) {
+            mNoInternet = true;
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this);
+            dialogBuilder.setMessage(R.string.no_internet).setNeutralButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    dialogInterface.dismiss();
+                }
+            }).setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialogInterface) {
+                    mLoading = false;
+                }
+            }).create().show();
+        }
     }
 
     private class DownloadReceiver extends BroadcastReceiver {
@@ -94,8 +154,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             mLoading = false;
-            if(toilets.length<10) {
-                // bottom is hit
+            if(toilets.length < FULL_PAGE_COUNT) {
                 mBottomHit = true;
             }
             mToiletsAdapter.addToilets(Arrays.asList(toilets));
@@ -103,5 +162,4 @@ public class MainActivity extends AppCompatActivity {
             if(DEBUG) Log.i(TAG, "Adapter item count: "+mToiletsAdapter.getItemCount());
         }
     }
-
 }
