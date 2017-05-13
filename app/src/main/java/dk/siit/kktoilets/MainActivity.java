@@ -15,7 +15,11 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView mRecyclerView;
     private ToiletsAdapter mToiletsAdapter;
     private LinearLayoutManager mLayoutManager;
+    private AdView mAdView;
     private int mRequestPage = 0;
     private boolean mLoading = false;
     private int mVisibleItems = 0;
@@ -45,6 +50,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        MobileAds.initialize(this, "ca-app-pub-3940256099942544~3347511713");
+        mAdView = (AdView) findViewById(R.id.ad_view);
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                .build();
+        mAdView.loadAd(adRequest);
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         mToiletsAdapter = new ToiletsAdapter(new ArrayList<Toilet>(0));
@@ -143,23 +155,27 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            mLoading = false;
             String response = intent.getStringExtra(BROADCAST_ANSWER_EXTRA);
             Gson gson = new Gson();
-            Toilet[] toilets = gson.fromJson(response, Toilet[].class);
-            if(DEBUG) {
-                for (Toilet toilet: toilets) {
-                    Log.i(TAG, toilet.getName());
-                    Log.i(TAG, toilet.getProperties().getToilet_type());
+            try {
+                Toilet[] toilets = gson.fromJson(response, Toilet[].class);
+                if (DEBUG) {
+                    for (Toilet toilet : toilets) {
+                        Log.i(TAG, toilet.getName());
+                        Log.i(TAG, toilet.getProperties().getToilet_type());
+                    }
                 }
+                if (toilets.length < FULL_PAGE_COUNT) {
+                    mBottomHit = true;
+                    mToiletsAdapter.setLoadComplete(true);
+                }
+                mToiletsAdapter.addToilets(Arrays.asList(toilets));
+                mToiletsAdapter.notifyDataSetChanged();
+                if (DEBUG) Log.i(TAG, "Adapter item count: " + mToiletsAdapter.getItemCount());
+            } catch(JsonSyntaxException ex) {
+                Log.e(TAG, "Error loading toilets", ex);
             }
-            mLoading = false;
-            if(toilets.length < FULL_PAGE_COUNT) {
-                mBottomHit = true;
-                mToiletsAdapter.setLoadComplete(true);
-            }
-            mToiletsAdapter.addToilets(Arrays.asList(toilets));
-            mToiletsAdapter.notifyDataSetChanged();
-            if(DEBUG) Log.i(TAG, "Adapter item count: "+mToiletsAdapter.getItemCount());
         }
     }
 }
