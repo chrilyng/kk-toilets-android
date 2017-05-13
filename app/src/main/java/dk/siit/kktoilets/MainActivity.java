@@ -117,9 +117,8 @@ public class MainActivity extends AppCompatActivity {
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        boolean isConnected = activeNetwork != null &&
+        return activeNetwork != null &&
                 activeNetwork.isConnectedOrConnecting();
-        return isConnected;
     }
 
     private void showNoInternetDialog() {
@@ -156,6 +155,7 @@ public class MainActivity extends AppCompatActivity {
             mLoading = false;
             if(toilets.length < FULL_PAGE_COUNT) {
                 mBottomHit = true;
+                mToiletsAdapter.setLoadComplete(true);
             }
             mToiletsAdapter.addToilets(Arrays.asList(toilets));
             mToiletsAdapter.notifyDataSetChanged();
