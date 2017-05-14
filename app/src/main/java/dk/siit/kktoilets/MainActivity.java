@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        MobileAds.initialize(this, "ca-app-pub-3940256099942544~3347511713");
+        MobileAds.initialize(this, getString(R.string.ad_id));
         mAdView = (AdView) findViewById(R.id.ad_view);
         AdRequest adRequest = new AdRequest.Builder()
                 .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
@@ -98,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
             startService(serviceIntent);
         } else {
             showNoInternetDialog();
+            mToiletsAdapter.setLoadComplete(true);
         }
     }
 
@@ -115,11 +116,13 @@ public class MainActivity extends AppCompatActivity {
             if(checkConnectivity()) {
                 mNoInternet = false;
                 mLoading = true;
+                mToiletsAdapter.setLoadComplete(false);
                 Intent serviceIntent = new Intent(this, DownloadService.class);
                 serviceIntent.putExtra(DownloadService.DOWNLOAD_EXTRA_PAGE, mRequestPage);
                 startService(serviceIntent);
             } else {
                 showNoInternetDialog();
+                mToiletsAdapter.setLoadComplete(true);
             }
         }
     }
@@ -175,6 +178,7 @@ public class MainActivity extends AppCompatActivity {
                 if (DEBUG) Log.i(TAG, "Adapter item count: " + mToiletsAdapter.getItemCount());
             } catch(JsonSyntaxException ex) {
                 Log.e(TAG, "Error loading toilets", ex);
+                mToiletsAdapter.setLoadComplete(true);
             }
         }
     }

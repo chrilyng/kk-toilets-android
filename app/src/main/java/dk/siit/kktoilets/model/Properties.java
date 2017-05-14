@@ -121,25 +121,4 @@ public class Properties {
         this.latitude = latitude;
     }
 
-
-//            "vejkode": "7108",
-//            "vejnavn": "Sundbyvester Plads",
-//            "lokation": "Sundbyvester Plads 20",
-//            "bydel": "Amager Vest",
-//            "reklameudstyr_zone": null,
-//            "toilet_type": "Danfo toiletenhed"
-//    "bemanding": "Ubemandet",
-//            "betaling": "Ikke betaling",
-//            "toilet_aaben_tid": "hele året",
-//            "afa_nummer": null,
-//            "afa_udstyrstype": null,
-//            "toilet_foto": null,
-//            "placering": "Park",
-//            "ejer": "CPN",
-//            "bemaerkning": null,
-//            "reg_dato": "2002-11-05Z",
-//            "rettet_dato": "2010-01-17Z",
-//            "rettet_af_init": null,
-//            "longitude": 12.52025,
-//            "latitude": 55.641833,
 }

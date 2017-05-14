@@ -31,7 +31,22 @@ public class Toilet {
 
     @Override
     public String toString() {
-        return getProperties().getVejnavn() + " " + getProperties().getToilet_type() + " " + getProperties().getBydel() +
-                " " + getProperties().getToilet_aaben_tid();
+        StringBuffer stringBuffer = new StringBuffer();
+        if(getProperties().getToilet_type()!=null) {
+            stringBuffer.append(getProperties().getToilet_type());
+            stringBuffer.append(" ");
+        }
+        if(getProperties().getVejnavn()!=null) {
+            stringBuffer.append(getProperties().getVejnavn());
+            stringBuffer.append(" ");
+        }
+        if(getProperties().getBydel()!=null) {
+            stringBuffer.append(getProperties().getBydel());
+            stringBuffer.append(" ");
+        }
+        if(getProperties().getToilet_aaben_tid()!=null) {
+            stringBuffer.append(getProperties().getToilet_aaben_tid());
+        }
+        return stringBuffer.toString();
     }
 }
