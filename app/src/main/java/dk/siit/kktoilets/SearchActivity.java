@@ -36,7 +36,7 @@ public class SearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
-        mTypeSpinner = (Spinner) findViewById(R.id.city_spinner);
+        mTypeSpinner = (Spinner) findViewById(R.id.type_spinner);
         mTypeReceiver = new TypeReceiver();
         mSearchButton = (Button) findViewById(R.id.search_button);
 
