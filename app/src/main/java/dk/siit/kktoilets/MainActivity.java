@@ -5,8 +5,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -14,6 +12,7 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.widget.TextView;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -31,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private static final boolean DEBUG = false;
     public static final String BROADCAST_ANSWER_ACTION = "dk.siit.kktoilets.DOWNLOAD_RECEIVE";
     public static final String BROADCAST_ANSWER_EXTRA = "dk.siit.kktoilets.DOWNLOAD_EXTRA";
+    public static final String INTENT_CITY_EXTRA = "dk.siit.kktoilets.CITY_EXTRA";
     private static final int FULL_PAGE_COUNT = 10;
     private static final int HALF_PAGE_COUNT = FULL_PAGE_COUNT/2;
 
@@ -39,17 +39,24 @@ public class MainActivity extends AppCompatActivity {
     private ToiletsAdapter mToiletsAdapter;
     private LinearLayoutManager mLayoutManager;
     private AdView mAdView;
+    private TextView mTextView;
     private int mRequestPage = 0;
     private boolean mLoading = false;
     private int mVisibleItems = 0;
     private int mTotalItems = 0;
     private boolean mBottomHit = false;
     private boolean mNoInternet = false;
+    private String mCitySearch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mCitySearch = getIntent().getStringExtra(INTENT_CITY_EXTRA);
+        mTextView = (TextView) findViewById(R.id.text_view);
+        if(mCitySearch!=null)
+            mTextView.setText(mCitySearch);
 
         MobileAds.initialize(this, getString(R.string.ad_id));
         mAdView = (AdView) findViewById(R.id.ad_view);
@@ -58,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
                 .build();
         mAdView.loadAd(adRequest);
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         mToiletsAdapter = new ToiletsAdapter(new ArrayList<Toilet>(0));
         mRecyclerView.setAdapter(mToiletsAdapter);
         mLayoutManager = new LinearLayoutManager(this);
@@ -72,11 +79,14 @@ public class MainActivity extends AppCompatActivity {
 
                 if(DEBUG) Log.i(TAG, "Visible items: "+mVisibleItems+" total items: "+mTotalItems + " bottom hit: "+mBottomHit);
 
-                if(checkConnectivity()) {
+                if(NetworkUtils.checkConnectivity(MainActivity.this)) {
                     if(!mBottomHit && !mLoading && mTotalItems - mVisibleItems < firstVisible + HALF_PAGE_COUNT) {
                         mLoading = true;
                         Intent serviceIntent = new Intent(MainActivity.this, DownloadService.class);
+                        serviceIntent.setAction(DownloadService.DOWNLOAD_ACTION);
                         serviceIntent.putExtra(DownloadService.DOWNLOAD_EXTRA_PAGE, ++mRequestPage);
+                        if(mCitySearch!=null)
+                            serviceIntent.putExtra(DownloadService.DOWNLOAD_EXTRA_TYPE, mCitySearch);
                         startService(serviceIntent);
                     }
                 } else {
@@ -91,10 +101,13 @@ public class MainActivity extends AppCompatActivity {
         intentFilter.addAction(BROADCAST_ANSWER_ACTION);
         LocalBroadcastManager.getInstance(this).registerReceiver(mDownloadReceiver, intentFilter);
 
-        if(checkConnectivity()) {
+        if(NetworkUtils.checkConnectivity(MainActivity.this)) {
             mLoading = true;
             Intent serviceIntent = new Intent(this, DownloadService.class);
+            serviceIntent.setAction(DownloadService.DOWNLOAD_ACTION);
             serviceIntent.putExtra(DownloadService.DOWNLOAD_EXTRA_PAGE, mRequestPage);
+            if(mCitySearch!=null)
+                serviceIntent.putExtra(DownloadService.DOWNLOAD_EXTRA_TYPE, mCitySearch);
             startService(serviceIntent);
         } else {
             showNoInternetDialog();
@@ -113,27 +126,21 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         if(mNoInternet) {
-            if(checkConnectivity()) {
+            if(NetworkUtils.checkConnectivity(MainActivity.this)) {
                 mNoInternet = false;
                 mLoading = true;
                 mToiletsAdapter.setLoadComplete(false);
                 Intent serviceIntent = new Intent(this, DownloadService.class);
+                serviceIntent.setAction(DownloadService.DOWNLOAD_ACTION);
                 serviceIntent.putExtra(DownloadService.DOWNLOAD_EXTRA_PAGE, mRequestPage);
+                if(mCitySearch!=null)
+                    serviceIntent.putExtra(DownloadService.DOWNLOAD_EXTRA_TYPE, mCitySearch);
                 startService(serviceIntent);
             } else {
                 showNoInternetDialog();
                 mToiletsAdapter.setLoadComplete(true);
             }
         }
-    }
-
-    private boolean checkConnectivity() {
-        ConnectivityManager cm =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        return activeNetwork != null &&
-                activeNetwork.isConnectedOrConnecting();
     }
 
     private void showNoInternetDialog() {
@@ -176,10 +183,11 @@ public class MainActivity extends AppCompatActivity {
                 mToiletsAdapter.addToilets(Arrays.asList(toilets));
                 mToiletsAdapter.notifyDataSetChanged();
                 if (DEBUG) Log.i(TAG, "Adapter item count: " + mToiletsAdapter.getItemCount());
-            } catch(JsonSyntaxException ex) {
+            } catch (JsonSyntaxException ex) {
                 Log.e(TAG, "Error loading toilets", ex);
                 mToiletsAdapter.setLoadComplete(true);
             }
         }
     }
+
 }
