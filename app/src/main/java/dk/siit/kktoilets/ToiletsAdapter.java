@@ -1,5 +1,8 @@
 package dk.siit.kktoilets;
 
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,10 +19,12 @@ public class ToiletsAdapter extends RecyclerView.Adapter<ToiletsAdapter.ViewHold
     public static final int PROGRESS_TYPE = 100;
 
     private List<Toilet> mToilets;
+    private Context mContext;
     private boolean mLoadComplete = false;
 
-    public ToiletsAdapter(List<Toilet> toilets) {
+    public ToiletsAdapter(List<Toilet> toilets, Context context) {
         mToilets = toilets;
+        mContext = context;
     }
 
     public void addToilets(List<Toilet> toilets) {
@@ -36,7 +41,7 @@ public class ToiletsAdapter extends RecyclerView.Adapter<ToiletsAdapter.ViewHold
         } else {
             View v = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.text_row_item, parent, false);
-            vh = new ToiletViewHolder(v);
+            vh = new ToiletViewHolder(v, ToiletsAdapter.this);
         }
         return vh;
     }
@@ -65,6 +70,26 @@ public class ToiletsAdapter extends RecyclerView.Adapter<ToiletsAdapter.ViewHold
         mLoadComplete = complete;
     }
 
+    public void toiletClicked(int position) {
+        StringBuilder stringBuilder = new StringBuilder("geo:0,0?q=");
+        stringBuilder.append(mToilets.get(position).getProperties().getLatitude());
+        stringBuilder.append(",");
+        stringBuilder.append(mToilets.get(position).getProperties().getLongitude());
+        stringBuilder.append("(");
+        stringBuilder.append(mToilets.get(position).getProperties().getToilet_type());
+        stringBuilder.append(")");
+        showMap(stringBuilder.toString());
+    }
+
+    public void showMap(String geoString) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        Uri geoUri = Uri.parse(geoString);
+        intent.setData(geoUri);
+        if (intent.resolveActivity(mContext.getPackageManager()) != null) {
+            mContext.startActivity(intent);
+        }
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         public ViewHolder(View v) {
@@ -83,12 +108,13 @@ public class ToiletsAdapter extends RecyclerView.Adapter<ToiletsAdapter.ViewHold
     private static class ToiletViewHolder extends ViewHolder {
         private final TextView textView;
 
-        public ToiletViewHolder(View v) {
+        public ToiletViewHolder(View v, final ToiletsAdapter ta) {
             super(v);
             v.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Log.d(TAG, "Element " + getPosition() + " clicked.");
+                    Log.d(TAG, "Element " + getAdapterPosition() + " clicked.");
+                    ta.toiletClicked(getAdapterPosition());
                 }
             });
             textView = (TextView) v.findViewById(R.id.textView);
@@ -98,4 +124,5 @@ public class ToiletsAdapter extends RecyclerView.Adapter<ToiletsAdapter.ViewHold
             return textView;
         }
     }
+
 }

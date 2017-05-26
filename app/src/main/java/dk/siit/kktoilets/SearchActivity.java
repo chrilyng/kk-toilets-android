@@ -74,25 +74,29 @@ public class SearchActivity extends AppCompatActivity {
             Gson gson = new Gson();
             try {
                 Type[] types = gson.fromJson(response, Type[].class);
-                final String[] typeStrings = new String[types.length];
-                for (int i=0; i<types.length; i++) {
-                    if (DEBUG)
-                        Log.i(TAG, "Type id: " + types[i].get_id());
-                    typeStrings[i]=types[i].get_id();
-                }
-                ArrayAdapter<String> cityAdapter = new ArrayAdapter<String>(SearchActivity.this, android.R.layout.simple_list_item_1, typeStrings);
-                mTypeSpinner.setAdapter(cityAdapter);
-                mTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                    @Override
-                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                        mCurrentCity = typeStrings[position];
+                if(types!=null) {
+                    final String[] typeStrings = new String[types.length];
+                    for (int i = 0; i < types.length; i++) {
+                        if (DEBUG)
+                            Log.i(TAG, "Type id: " + types[i].get_id());
+                        typeStrings[i] = types[i].get_id();
                     }
+                    ArrayAdapter<String> cityAdapter = new ArrayAdapter<String>(SearchActivity.this, android.R.layout.simple_list_item_1, typeStrings);
+                    mTypeSpinner.setAdapter(cityAdapter);
+                    mTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                        @Override
+                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                            mCurrentCity = typeStrings[position];
+                        }
 
-                    @Override
-                    public void onNothingSelected(AdapterView<?> parent) {
-                        mCurrentCity = "";
-                    }
-                });
+                        @Override
+                        public void onNothingSelected(AdapterView<?> parent) {
+                            mCurrentCity = "";
+                        }
+                    });
+                } else {
+                    // TODO handle error message
+                }
             } catch (JsonSyntaxException ex) {
                 Log.e(TAG, "Error loading cities", ex);
             }

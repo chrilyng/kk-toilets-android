@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -66,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         mAdView.loadAd(adRequest);
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        mToiletsAdapter = new ToiletsAdapter(new ArrayList<Toilet>(0));
+        mToiletsAdapter = new ToiletsAdapter(new ArrayList<Toilet>(0), MainActivity.this);
         mRecyclerView.setAdapter(mToiletsAdapter);
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -176,12 +177,16 @@ public class MainActivity extends AppCompatActivity {
                         Log.i(TAG, toilet.getProperties().getToilet_type());
                     }
                 }
-                if (toilets.length < FULL_PAGE_COUNT) {
-                    mBottomHit = true;
-                    mToiletsAdapter.setLoadComplete(true);
+                if(toilets!=null) {
+                    if (toilets.length < FULL_PAGE_COUNT) {
+                        mBottomHit = true;
+                        mToiletsAdapter.setLoadComplete(true);
+                    }
+                    mToiletsAdapter.addToilets(Arrays.asList(toilets));
+                    mToiletsAdapter.notifyDataSetChanged();
+                } else {
+                    // TODO error message
                 }
-                mToiletsAdapter.addToilets(Arrays.asList(toilets));
-                mToiletsAdapter.notifyDataSetChanged();
                 if (DEBUG) Log.i(TAG, "Adapter item count: " + mToiletsAdapter.getItemCount());
             } catch (JsonSyntaxException ex) {
                 Log.e(TAG, "Error loading toilets", ex);
