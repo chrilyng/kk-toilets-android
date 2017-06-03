@@ -8,6 +8,8 @@ import android.util.Log;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -28,7 +30,8 @@ public class DownloadService extends IntentService {
     private static final String PAGE_OPTION = "page=";
     private static final String TYPE_OPTION = "type=";
 
-    private OkHttpClient client;
+    @Inject
+    OkHttpClient mClient;
 
     public DownloadService() {
         super("kk-toilets-download-service");
@@ -37,10 +40,7 @@ public class DownloadService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
-        int cacheSize = 10 * 1024 * 1024; // 10MB
-        Cache cache = new Cache(getCacheDir(), cacheSize);
-        client = new OkHttpClient.Builder().cache(cache).connectTimeout(10000, TimeUnit.SECONDS)
-                .build();
+        ((ToiletApp)getApplication()).getNetworkComponent().inject(this);
     }
 
     @Override
@@ -92,7 +92,7 @@ public class DownloadService extends IntentService {
                 .url(url)
                 .build();
 
-        Response response = client.newCall(request).execute();
+        Response response = mClient.newCall(request).execute();
         return response.body().string();
     }
 }
