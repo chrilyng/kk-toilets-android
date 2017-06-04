@@ -15,13 +15,13 @@ import okhttp3.OkHttpClient;
 public class NetworkModule {
     String mBaseURL;
 
-    public NetworkModule(String mBaseURL) {
-        this.mBaseURL = mBaseURL;
+    public NetworkModule(String baseURL) {
+        this.mBaseURL = baseURL;
     }
 
     @Provides
     @Singleton
-    Cache provideOkHttpCache(Application application) {
+    Cache providesOkHttpCache(Application application) {
         int cacheSize = 10 * 1024 * 1024; // 10 MiB
         Cache cache = new Cache(application.getCacheDir(), cacheSize);
         return cache;
@@ -29,7 +29,7 @@ public class NetworkModule {
 
     @Provides
     @Singleton
-    OkHttpClient provideOkHttpClient(Cache cache) {
+    OkHttpClient providesOkHttpClient(Cache cache) {
         OkHttpClient client = new OkHttpClient.Builder().cache(cache).connectTimeout(10000, TimeUnit.SECONDS)
                 .build();
         return client;

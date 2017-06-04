@@ -11,8 +11,8 @@ import dagger.Provides;
 public class ToiletAppModule {
     Application mApplication;
 
-    public ToiletAppModule(Application mApplication) {
-        this.mApplication = mApplication;
+    public ToiletAppModule(Application application) {
+        this.mApplication = application;
     }
 
     @Provides

@@ -5,6 +5,10 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
 public class NetworkUtils {
+    static final String URL_OPTION = "?";
+    static final String URL_AND = "&";
+    static final String PAGE_OPTION = "page=";
+    static final String TYPE_OPTION = "type=";
 
     public static boolean checkConnectivity(Context context) {
         ConnectivityManager cm =
