@@ -8,6 +8,8 @@ import android.util.Log;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -15,20 +17,13 @@ import okhttp3.Response;
 
 public class DownloadService extends IntentService {
     private static final String TAG = DownloadService.class.getName();
-    private static final String DOWNLOAD_URL = "https://kk-toilets.herokuapp.com/toilet";
-    private static final String CITY_URL = "https://kk-toilets.herokuapp.com/bydele";
-    private static final String TYPE_URL = "https://kk-toilets.herokuapp.com/typer";
-    private static final String TIME_URL = "https://kk-toilets.herokuapp.com/tider";
     public static final String DOWNLOAD_ACTION = "dk.siit.kktoilets.DOWNLOAD_ACTION";
     public static final String TYPE_ACTION = "dk.siit.kktoilets.TYPE_ACTION";
     public static final String DOWNLOAD_EXTRA_PAGE = "dk.siit.kktoilets.DOWNLOAD_EXTRA_PAGE";
     public static final String DOWNLOAD_EXTRA_TYPE = "dk.siit.kktoilets.DOWNLOAD_EXTRA_TYPE";
-    private static final String URL_OPTION = "?";
-    private static final String URL_AND = "&";
-    private static final String PAGE_OPTION = "page=";
-    private static final String TYPE_OPTION = "type=";
 
-    private OkHttpClient client;
+    @Inject
+    OkHttpClient mClient;
 
     public DownloadService() {
         super("kk-toilets-download-service");
@@ -37,10 +32,7 @@ public class DownloadService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
-        int cacheSize = 10 * 1024 * 1024; // 10MB
-        Cache cache = new Cache(getCacheDir(), cacheSize);
-        client = new OkHttpClient.Builder().cache(cache).connectTimeout(10000, TimeUnit.SECONDS)
-                .build();
+        ((ToiletApp)getApplication()).getNetworkComponent().inject(this);
     }
 
     @Override
@@ -50,14 +42,14 @@ public class DownloadService extends IntentService {
                 int page = intent.getIntExtra(DOWNLOAD_EXTRA_PAGE, 0);
                 String city = intent.getStringExtra(DOWNLOAD_EXTRA_TYPE);
                 Log.i(TAG, "Request page " + page);
-                StringBuffer urlStringBuffer = new StringBuffer(DOWNLOAD_URL);
-                urlStringBuffer.append(URL_OPTION);
-                urlStringBuffer.append(PAGE_OPTION);
+                StringBuffer urlStringBuffer = new StringBuffer(ToiletApp.DOWNLOAD_URL);
+                urlStringBuffer.append(NetworkUtils.URL_OPTION);
+                urlStringBuffer.append(NetworkUtils.PAGE_OPTION);
                 urlStringBuffer.append(page);
                 if(city!=null) {
 //                    Log.i(TAG, "Request city " + city);
-                    urlStringBuffer.append(URL_AND);
-                    urlStringBuffer.append(TYPE_OPTION);
+                    urlStringBuffer.append(NetworkUtils.URL_AND);
+                    urlStringBuffer.append(NetworkUtils.TYPE_OPTION);
                     urlStringBuffer.append(city);
                 }
                 String response = doRequest(urlStringBuffer.toString());
@@ -72,7 +64,7 @@ public class DownloadService extends IntentService {
             }
         } else if(intent.getAction().equals(TYPE_ACTION)) {
             try {
-                String response = doRequest(TYPE_URL);
+                String response = doRequest(ToiletApp.TYPE_URL);
                 Intent broadcastIntent = new Intent(SearchActivity.BROADCAST_TYPE_ANSWER_ACTION);
                 broadcastIntent.putExtra(SearchActivity.BROADCAST_TYPE_ANSWER_EXTRA, response);
                 LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent);
@@ -92,7 +84,7 @@ public class DownloadService extends IntentService {
                 .url(url)
                 .build();
 
-        Response response = client.newCall(request).execute();
+        Response response = mClient.newCall(request).execute();
         return response.body().string();
     }
 }
