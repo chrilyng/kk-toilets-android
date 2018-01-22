@@ -9,15 +9,15 @@ import dagger.Provides;
 
 @Module
 public class ToiletAppModule {
-    Application mApplication;
+    ToiletApp mApplication;
 
-    public ToiletAppModule(Application application) {
+    public ToiletAppModule(ToiletApp application) {
         this.mApplication = application;
     }
 
     @Provides
     @Singleton
-    Application providesApplication() {
+    ToiletApp providesApplication() {
         return mApplication;
     }
 }

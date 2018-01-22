@@ -21,7 +21,7 @@ public class NetworkModule {
 
     @Provides
     @Singleton
-    Cache providesOkHttpCache(Application application) {
+    Cache providesOkHttpCache(ToiletApp application) {
         int cacheSize = 10 * 1024 * 1024; // 10 MiB
         Cache cache = new Cache(application.getCacheDir(), cacheSize);
         return cache;

@@ -59,12 +59,12 @@ public class MainActivity extends AppCompatActivity {
         if(mCitySearch!=null)
             mTextView.setText(mCitySearch);
 
-        MobileAds.initialize(this, getString(R.string.ad_id));
-        mAdView = (AdView) findViewById(R.id.ad_view);
-        AdRequest adRequest = new AdRequest.Builder()
-                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                .build();
-        mAdView.loadAd(adRequest);
+//        MobileAds.initialize(this, getString(R.string.ad_id));
+//        mAdView = (AdView) findViewById(R.id.ad_view);
+//        AdRequest adRequest = new AdRequest.Builder()
+//                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+//                .build();
+//        mAdView.loadAd(adRequest);
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         mToiletsAdapter = new ToiletsAdapter(new ArrayList<Toilet>(0), MainActivity.this);
